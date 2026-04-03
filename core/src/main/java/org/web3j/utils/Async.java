@@ -24,10 +24,44 @@ public class Async {
 
     private Async() {}
 
+    /**
+     * The task executor used for all async operations.
+     *
+     * <p>Note that this executor is static and will live for the duration of the JVM lifecycle
+     * unless manually shut down. In web container environments (e.g. Tomcat, Jetty), this can lead
+     * to ClassLoader leaks when applications are reloaded. Use {@link #shutdown()} to manually stop
+     * the executor during application undeployment.
+     */
     private static final ExecutorService executor = Executors.newCachedThreadPool();
 
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown(executor)));
+    }
+
+    /**
+     * Stop the executor service.
+     *
+     * <p>This method should be called when an application is undeployed in a web container (e.g.
+     * via a {@code ServletContextListener}) to prevent ClassLoader leaks.
+     *
+     * <p>Example usage in a {@code ServletContextListener}:
+     *
+     * <pre>
+     * public void contextDestroyed(ServletContextEvent sce) {
+     *     Async.shutdown();
+     * }
+     * </pre>
+     */
+    public static void shutdown() {
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
     public static <T> CompletableFuture<T> run(Callable<T> callable) {
