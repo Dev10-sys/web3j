@@ -78,4 +78,34 @@ public class Eip7594TransactionTest {
         assertTrue(decoded4844.getKzgCommitments().isPresent());
         assertEquals(1, decoded4844.getKzgCommitments().get().size());
     }
+
+    @Test
+    public void testInvalidOsakaTransactionSize() {
+        List<Blob> blobs = Collections.singletonList(new Blob(new byte[131072]));
+        List<Bytes> kzgCommitments = Collections.singletonList(Bytes.wrap(new byte[48]));
+        // Two lists of proofs for one blob - should fail
+        List<List<Bytes>> cellProofs =
+                Arrays.asList(
+                        Collections.singletonList(Bytes.wrap(new byte[48])),
+                        Collections.singletonList(Bytes.wrap(new byte[48])));
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () ->
+                        RawTransaction.createOsakaTransaction(
+                                blobs,
+                                kzgCommitments,
+                                cellProofs,
+                                BigInteger.ONE,
+                                1,
+                                BigInteger.ZERO,
+                                BigInteger.TEN,
+                                BigInteger.TEN,
+                                BigInteger.valueOf(21000),
+                                "0x0000000000000000000000000000000000000000",
+                                BigInteger.ZERO,
+                                "",
+                                BigInteger.TEN,
+                                Collections.singletonList(Bytes.wrap(new byte[32]))));
+    }
 }

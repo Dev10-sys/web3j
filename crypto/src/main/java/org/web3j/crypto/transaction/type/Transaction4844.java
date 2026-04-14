@@ -108,6 +108,16 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
         this.kzgProofs = Optional.empty();
         this.wrapperVersion = Optional.ofNullable(wrapperVersion);
         this.cellProofs = Optional.ofNullable(cellProofs);
+
+        if (this.blobs.isPresent()
+                && this.kzgCommitments.isPresent()
+                && this.cellProofs.isPresent()) {
+            if (this.blobs.get().size() != this.kzgCommitments.get().size()
+                    || this.blobs.get().size() != this.cellProofs.get().size()) {
+                throw new IllegalArgumentException(
+                        "Number of blobs, commitments, and cell proofs must match");
+            }
+        }
     }
 
     protected Transaction4844(
