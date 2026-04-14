@@ -232,6 +232,40 @@ public class RawTransaction {
                         versionedHashes));
     }
 
+    public static RawTransaction createOsakaTransaction(
+            List<Blob> blobs,
+            List<Bytes> kzgCommitments,
+            List<List<Bytes>> cellProofs,
+            BigInteger wrapperVersion,
+            long chainId,
+            BigInteger nonce,
+            BigInteger maxPriorityFeePerGas,
+            BigInteger maxFeePerGas,
+            BigInteger gasLimit,
+            String to,
+            BigInteger value,
+            String data,
+            BigInteger maxFeePerBlobGas,
+            List<Bytes> versionedHashes) {
+
+        return new RawTransaction(
+                Transaction4844.createOsakaTransaction(
+                        blobs,
+                        kzgCommitments,
+                        cellProofs,
+                        wrapperVersion,
+                        chainId,
+                        nonce,
+                        maxPriorityFeePerGas,
+                        maxFeePerGas,
+                        gasLimit,
+                        to,
+                        value,
+                        data,
+                        maxFeePerBlobGas,
+                        versionedHashes));
+    }
+
     public static RawTransaction createTransaction(
             long chainId,
             BigInteger nonce,

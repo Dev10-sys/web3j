@@ -126,19 +126,39 @@ public class TransactionDecoder {
         final List<Blob> blobs;
         final List<Bytes> kzgCommitments;
         final List<Bytes> kzgProofs;
+        final BigInteger wrapperVersion;
+        final List<List<Bytes>> cellProofs;
+
         // Check if the first element of outerList is a list
         if (outerList.getValues().get(0) instanceof RlpList) {
-            txPayload = (RlpList) outerList.getValues().get(0);
-
-            // Decode blobs, commitments, and proofs
-            blobs = decodeBlobs(((RlpList) outerList.getValues().get(1)).getValues());
-            kzgCommitments = decodeBytesList(((RlpList) outerList.getValues().get(2)).getValues());
-            kzgProofs = decodeBytesList(((RlpList) outerList.getValues().get(3)).getValues());
+            int size = outerList.getValues().size();
+            if (size == 5) {
+                // EIP-7594 wrapper format: [tx_payload_body, wrapper_version, blobs, commitments,
+                // cell_proofs]
+                txPayload = (RlpList) outerList.getValues().get(0);
+                wrapperVersion = ((RlpString) outerList.getValues().get(1)).asPositiveBigInteger();
+                blobs = decodeBlobs(((RlpList) outerList.getValues().get(2)).getValues());
+                kzgCommitments =
+                        decodeBytesList(((RlpList) outerList.getValues().get(3)).getValues());
+                cellProofs = decodeCellProofs(((RlpList) outerList.getValues().get(4)).getValues());
+                kzgProofs = null;
+            } else {
+                // EIP-4844 wrapper format: [tx_payload_body, blobs, commitments, proofs]
+                txPayload = (RlpList) outerList.getValues().get(0);
+                blobs = decodeBlobs(((RlpList) outerList.getValues().get(1)).getValues());
+                kzgCommitments =
+                        decodeBytesList(((RlpList) outerList.getValues().get(2)).getValues());
+                kzgProofs = decodeBytesList(((RlpList) outerList.getValues().get(3)).getValues());
+                wrapperVersion = null;
+                cellProofs = null;
+            }
         } else {
             txPayload = (RlpList) outerList;
             blobs = null;
             kzgCommitments = null;
             kzgProofs = null;
+            wrapperVersion = null;
+            cellProofs = null;
         }
 
         // Decode the transaction payload
@@ -158,21 +178,41 @@ public class TransactionDecoder {
                 decodeVersionedHashes(((RlpList) txValues.get(10)).getValues());
 
         // Create the raw transaction object
-        final RawTransaction rawTransaction =
-                RawTransaction.createTransaction(
-                        blobs,
-                        kzgCommitments,
-                        kzgProofs,
-                        chainId,
-                        nonce,
-                        maxPriorityFeePerGas,
-                        maxFeePerGas,
-                        gasLimit,
-                        to,
-                        value,
-                        data,
-                        maxFeePerBlobGas,
-                        versionedHashes);
+        final RawTransaction rawTransaction;
+        if (wrapperVersion != null) {
+            rawTransaction =
+                    RawTransaction.createOsakaTransaction(
+                            blobs,
+                            kzgCommitments,
+                            cellProofs,
+                            wrapperVersion,
+                            chainId,
+                            nonce,
+                            maxPriorityFeePerGas,
+                            maxFeePerGas,
+                            gasLimit,
+                            to,
+                            value,
+                            data,
+                            maxFeePerBlobGas,
+                            versionedHashes);
+        } else {
+            rawTransaction =
+                    RawTransaction.createTransaction(
+                            blobs,
+                            kzgCommitments,
+                            kzgProofs,
+                            chainId,
+                            nonce,
+                            maxPriorityFeePerGas,
+                            maxFeePerGas,
+                            gasLimit,
+                            to,
+                            value,
+                            data,
+                            maxFeePerBlobGas,
+                            versionedHashes);
+        }
 
         // Handle signature if present
         if (txValues.size() > UNSIGNED_EIP4844TX_RLP_LIST_SIZE) {
@@ -202,6 +242,12 @@ public class TransactionDecoder {
     private static List<Bytes> decodeBytesList(List<RlpType> rlpBytesList) {
         return rlpBytesList.stream()
                 .map(r -> Bytes.wrap(((RlpString) r).getBytes()))
+                .collect(Collectors.toList());
+    }
+
+    private static List<List<Bytes>> decodeCellProofs(List<RlpType> rlpCellProofs) {
+        return rlpCellProofs.stream()
+                .map(r -> decodeBytesList(((RlpList) r).getValues()))
                 .collect(Collectors.toList());
     }
 

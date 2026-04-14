@@ -35,8 +35,10 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
     private final BigInteger maxFeePerBlobGas;
     private final List<Bytes> versionedHashes;
     private final Optional<List<Blob>> blobs;
-    private final Optional<List<Bytes>> kzgProofs;
     private final Optional<List<Bytes>> kzgCommitments;
+    private final Optional<List<Bytes>> kzgProofs;
+    private final Optional<BigInteger> wrapperVersion;
+    private final Optional<List<List<Bytes>>> cellProofs;
 
     protected Transaction4844(
             long chainId,
@@ -55,6 +57,8 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
         this.blobs = Optional.empty();
         this.kzgCommitments = Optional.empty();
         this.kzgProofs = Optional.empty();
+        this.wrapperVersion = Optional.empty();
+        this.cellProofs = Optional.empty();
     }
 
     protected Transaction4844(
@@ -77,6 +81,33 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
         this.blobs = Optional.ofNullable(blobs);
         this.kzgCommitments = Optional.ofNullable(kzgCommitments);
         this.kzgProofs = Optional.ofNullable(kzgProofs);
+        this.wrapperVersion = Optional.empty();
+        this.cellProofs = Optional.empty();
+    }
+
+    protected Transaction4844(
+            List<Blob> blobs,
+            List<Bytes> kzgCommitments,
+            List<List<Bytes>> cellProofs,
+            BigInteger wrapperVersion,
+            long chainId,
+            BigInteger nonce,
+            BigInteger maxPriorityFeePerGas,
+            BigInteger maxFeePerGas,
+            BigInteger gasLimit,
+            String to,
+            BigInteger value,
+            String data,
+            BigInteger maxFeePerBlobGas,
+            List<Bytes> versionedHashes) {
+        super(chainId, nonce, gasLimit, to, value, data, maxPriorityFeePerGas, maxFeePerGas);
+        this.maxFeePerBlobGas = maxFeePerBlobGas;
+        this.versionedHashes = versionedHashes;
+        this.blobs = Optional.ofNullable(blobs);
+        this.kzgCommitments = Optional.ofNullable(kzgCommitments);
+        this.kzgProofs = Optional.empty();
+        this.wrapperVersion = Optional.ofNullable(wrapperVersion);
+        this.cellProofs = Optional.ofNullable(cellProofs);
     }
 
     protected Transaction4844(
@@ -115,6 +146,8 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
                 this.kzgCommitments.get().stream()
                         .map(BlobUtils::kzgToVersionedHash)
                         .collect(Collectors.toList());
+        this.wrapperVersion = Optional.empty();
+        this.cellProofs = Optional.empty();
     }
 
     @Override
@@ -158,9 +191,17 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
             result.add(new RlpList(resultTx));
 
             // Adding blobs, commitments, and proofs
-            result.add(new RlpList(getRlpBlobs()));
-            result.add(new RlpList(getRlpKzgCommitments()));
-            result.add(new RlpList(getRlpKzgProofs()));
+            // Adding blobs, commitments, and proofs
+            if (wrapperVersion.isPresent()) {
+                result.add(RlpString.create(wrapperVersion.get()));
+                result.add(new RlpList(getRlpBlobs()));
+                result.add(new RlpList(getRlpKzgCommitments()));
+                result.add(new RlpList(getRlpCellProofs()));
+            } else {
+                result.add(new RlpList(getRlpBlobs()));
+                result.add(new RlpList(getRlpKzgCommitments()));
+                result.add(new RlpList(getRlpKzgProofs()));
+            }
 
             return result;
         } else {
@@ -188,6 +229,39 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
                 blobs,
                 kzgCommitments,
                 kzgProofs,
+                chainId,
+                nonce,
+                maxPriorityFeePerGas,
+                maxFeePerGas,
+                gasLimit,
+                to,
+                value,
+                data,
+                maxFeePerBlobGas,
+                versionedHashes);
+    }
+
+    public static Transaction4844 createOsakaTransaction(
+            List<Blob> blobs,
+            List<Bytes> kzgCommitments,
+            List<List<Bytes>> cellProofs,
+            BigInteger wrapperVersion,
+            long chainId,
+            BigInteger nonce,
+            BigInteger maxPriorityFeePerGas,
+            BigInteger maxFeePerGas,
+            BigInteger gasLimit,
+            String to,
+            BigInteger value,
+            String data,
+            BigInteger maxFeePerBlobGas,
+            List<Bytes> versionedHashes) {
+
+        return new Transaction4844(
+                blobs,
+                kzgCommitments,
+                cellProofs,
+                wrapperVersion,
                 chainId,
                 nonce,
                 maxPriorityFeePerGas,
@@ -270,6 +344,14 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
         return versionedHashes;
     }
 
+    public Optional<BigInteger> getWrapperVersion() {
+        return wrapperVersion;
+    }
+
+    public Optional<List<List<Bytes>>> getCellProofs() {
+        return cellProofs;
+    }
+
     public List<RlpType> getRlpVersionedHashes() {
         return versionedHashes.stream()
                 .map(hash -> RlpString.create(hash.toArray()))
@@ -301,6 +383,28 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
                         blobList ->
                                 blobList.stream()
                                         .map(blob -> RlpString.create(blob.getData().toArray()))
+                                        .collect(Collectors.toList()))
+                .orElse(Collections.emptyList());
+    }
+
+    public List<RlpType> getRlpCellProofs() {
+        return cellProofs
+                .<List<RlpType>>map(
+                        outerList ->
+                                outerList.stream()
+                                        .map(
+                                                innerList ->
+                                                        new RlpList(
+                                                                innerList.stream()
+                                                                        .map(
+                                                                                bytes ->
+                                                                                        RlpString
+                                                                                                .create(
+                                                                                                        bytes
+                                                                                                                .toArray()))
+                                                                        .collect(
+                                                                                Collectors
+                                                                                        .toList())))
                                         .collect(Collectors.toList()))
                 .orElse(Collections.emptyList());
     }
