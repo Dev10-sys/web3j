@@ -29,6 +29,7 @@ public class DynamicEIP1559GasProvider implements ContractEIP1559GasProvider, Pr
     private final Priority priority;
     private final BigDecimal customMultiplier;
     private BigInteger maxGasLimit = BigInteger.valueOf(9_000_000);
+    private BigInteger lastMaxPriorityFeePerGas = BigInteger.ZERO;
 
     public DynamicEIP1559GasProvider(Web3j web3j, long chainId) {
         this(web3j, chainId, Priority.NORMAL);
@@ -60,14 +61,25 @@ public class DynamicEIP1559GasProvider implements ContractEIP1559GasProvider, Pr
                             .getBlock()
                             .getBaseFeePerGas();
 
-            return baseFee.multiply(BigInteger.valueOf(2)).add(getMaxPriorityFeePerGas());
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to get ethMaxFeePerGas");
+            BigInteger maxPriorityFeePerGas = getMaxPriorityFeePerGas();
+            BigInteger maxFee = baseFee.multiply(BigInteger.valueOf(2)).add(maxPriorityFeePerGas);
+            return maxFee.max(lastMaxPriorityFeePerGas);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get ethMaxFeePerGas", e);
         }
     }
 
     @Override
     public BigInteger getMaxPriorityFeePerGas() {
+        BigInteger currentPriorityFee =
+                applyPriority(fetchMaxPriorityFeePerGas(), priority, customMultiplier);
+        if (currentPriorityFee.compareTo(lastMaxPriorityFeePerGas) > 0) {
+            lastMaxPriorityFeePerGas = currentPriorityFee;
+        }
+        return currentPriorityFee;
+    }
+
+    private BigInteger fetchMaxPriorityFeePerGas() {
         try {
             EthMaxPriorityFeePerGas ethMaxPriorityFeePerGas =
                     web3j.ethMaxPriorityFeePerGas().send();
@@ -78,7 +90,7 @@ public class DynamicEIP1559GasProvider implements ContractEIP1559GasProvider, Pr
             }
             return ethMaxPriorityFeePerGas.getMaxPriorityFeePerGas();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to get ethMaxPriorityFeePerGas");
+            throw new RuntimeException("Failed to get ethMaxPriorityFeePerGas", e);
         }
     }
 
