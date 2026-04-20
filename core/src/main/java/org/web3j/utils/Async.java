@@ -24,30 +24,10 @@ public class Async {
 
     private Async() {}
 
-    /**
-     * Shared executor used for async operations.
-     * Use {@link #shutdown()} to stop it and prevent ClassLoader leaks during web app undeployment.
-     */
     private static final ExecutorService executor = Executors.newCachedThreadPool();
 
     static {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown(executor)));
-    }
-
-    /**
-     * Stops the shared executor service.
-     * Useful in web containers to release threads and prevent ClassLoader leaks.
-     */
-    public static void shutdown() {
-        executor.shutdown();
-        try {
-            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                executor.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            executor.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
     }
 
     public static <T> CompletableFuture<T> run(Callable<T> callable) {
