@@ -722,42 +722,46 @@ public class SolidityFunctionWrapper extends Generator {
                 } else if (type.startsWith("tuple") && type.contains("[")) {
                     nativeTypeName = buildStructArrayTypeName(component, false);
                     typeName = buildStructArrayTypeName(component, useNativeJavaTypes);
-
-                    // adding extra annotation for dynamic types
-                    annotationSpec =
-                            AnnotationSpec.builder(Parameterized.class)
-                                    .addMember(
-                                            "type",
-                                            "$T.class",
-                                            ClassName.get("", resolveStructName(component)))
-                                    .build();
                 } else {
                     nativeTypeName = buildTypeName(type, useJavaPrimitiveTypes);
                     typeName = getWrapperType(nativeTypeName);
-                    if (type.contains("[")) {
-                        annotationSpec =
-                                AnnotationSpec.builder(Parameterized.class)
-                                        .addMember(
-                                                "type",
-                                                "$T.class",
-                                                TypeReference.makeTypeReference(
-                                                                type.substring(
-                                                                        0, type.indexOf('[')))
-                                                        .getClassType())
-                                        .build();
-                    }
                 }
+
+                String trimmedType = trimStorageDeclaration(type);
+                boolean isDynamicArray = trimmedType.endsWith("[]");
+                boolean isStaticArray = trimmedType.matches(".*\\[[0-9]+\\]$");
+
+                if (isDynamicArray && !isStaticArray) {
+                    TypeName rawType =
+                            type.startsWith("tuple")
+                                    ? ClassName.get("", resolveStructName(component))
+                                    : ClassName.get(
+                                            TypeReference.makeTypeReference(
+                                                            type.substring(0, type.indexOf('[')))
+                                                    .getClassType());
+                    annotationSpec =
+                            AnnotationSpec.builder(Parameterized.class)
+                                    .addMember("type", "$T.class", rawType)
+                                    .build();
+                }
+
                 final String componentName =
                         !SourceVersion.isName(component.getName())
                                 ? "_" + component.getName()
                                 : component.getName();
                 builder.addField(typeName, componentName, Modifier.PUBLIC);
-                constructorBuilder.addParameter(typeName, componentName);
+
+                ParameterSpec.Builder parameterBuilder =
+                        ParameterSpec.builder(typeName, componentName);
                 ParameterSpec.Builder nativeParameterBuilder =
                         ParameterSpec.builder(nativeTypeName, componentName);
+
                 if (annotationSpec != null) {
+                    parameterBuilder.addAnnotation(annotationSpec);
                     nativeParameterBuilder.addAnnotation(annotationSpec);
                 }
+
+                constructorBuilder.addParameter(parameterBuilder.build());
                 nativeConstructorBuilder.addParameter(nativeParameterBuilder.build());
 
                 constructorBuilder.addStatement("this." + componentName + " = " + componentName);
