@@ -722,30 +722,23 @@ public class SolidityFunctionWrapper extends Generator {
                 } else if (type.startsWith("tuple") && type.contains("[")) {
                     nativeTypeName = buildStructArrayTypeName(component, false);
                     typeName = buildStructArrayTypeName(component, useNativeJavaTypes);
-
-                    // adding extra annotation for dynamic types
-                    annotationSpec =
-                            AnnotationSpec.builder(Parameterized.class)
-                                    .addMember(
-                                            "type",
-                                            "$T.class",
-                                            ClassName.get("", resolveStructName(component)))
-                                    .build();
                 } else {
                     nativeTypeName = buildTypeName(type, useJavaPrimitiveTypes);
                     typeName = getWrapperType(nativeTypeName);
-                    if (type.contains("[")) {
-                        annotationSpec =
-                                AnnotationSpec.builder(Parameterized.class)
-                                        .addMember(
-                                                "type",
-                                                "$T.class",
-                                                TypeReference.makeTypeReference(
-                                                                type.substring(
-                                                                        0, type.indexOf('[')))
-                                                        .getClassType())
-                                        .build();
-                    }
+                }
+
+                if (trimStorageDeclaration(type).endsWith("[]")) {
+                    TypeName rawType =
+                            type.startsWith("tuple")
+                                    ? ClassName.get("", resolveStructName(component))
+                                    : ClassName.get(
+                                            TypeReference.makeTypeReference(
+                                                            type.substring(0, type.indexOf('[')))
+                                                    .getClassType());
+                    annotationSpec =
+                            AnnotationSpec.builder(Parameterized.class)
+                                    .addMember("type", "$T.class", rawType)
+                                    .build();
                 }
                 final String componentName =
                         !SourceVersion.isName(component.getName())
