@@ -49,7 +49,33 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
             String data,
             BigInteger maxFeePerBlobGas,
             List<Bytes> versionedHashes) {
-        super(chainId, nonce, gasLimit, to, value, data, maxPriorityFeePerGas, maxFeePerGas);
+        this(
+                chainId,
+                nonce,
+                maxPriorityFeePerGas,
+                maxFeePerGas,
+                gasLimit,
+                to,
+                value,
+                data,
+                maxFeePerBlobGas,
+                versionedHashes,
+                Collections.emptyList());
+    }
+
+    protected Transaction4844(
+            long chainId,
+            BigInteger nonce,
+            BigInteger maxPriorityFeePerGas,
+            BigInteger maxFeePerGas,
+            BigInteger gasLimit,
+            String to,
+            BigInteger value,
+            String data,
+            BigInteger maxFeePerBlobGas,
+            List<Bytes> versionedHashes,
+            List<org.web3j.crypto.AccessListObject> accessList) {
+        super(chainId, nonce, gasLimit, to, value, data, maxPriorityFeePerGas, maxFeePerGas, accessList);
         this.maxFeePerBlobGas = maxFeePerBlobGas;
         this.versionedHashes = versionedHashes;
         this.blobs = Optional.empty();
@@ -71,7 +97,39 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
             String data,
             BigInteger maxFeePerBlobGas,
             List<Bytes> versionedHashes) {
-        super(chainId, nonce, gasLimit, to, value, data, maxPriorityFeePerGas, maxFeePerGas);
+        this(
+                blobs,
+                kzgCommitments,
+                kzgProofs,
+                chainId,
+                nonce,
+                maxPriorityFeePerGas,
+                maxFeePerGas,
+                gasLimit,
+                to,
+                value,
+                data,
+                maxFeePerBlobGas,
+                versionedHashes,
+                Collections.emptyList());
+    }
+
+    protected Transaction4844(
+            List<Blob> blobs,
+            List<Bytes> kzgCommitments,
+            List<Bytes> kzgProofs,
+            long chainId,
+            BigInteger nonce,
+            BigInteger maxPriorityFeePerGas,
+            BigInteger maxFeePerGas,
+            BigInteger gasLimit,
+            String to,
+            BigInteger value,
+            String data,
+            BigInteger maxFeePerBlobGas,
+            List<Bytes> versionedHashes,
+            List<org.web3j.crypto.AccessListObject> accessList) {
+        super(chainId, nonce, gasLimit, to, value, data, maxPriorityFeePerGas, maxFeePerGas, accessList);
         this.maxFeePerBlobGas = maxFeePerBlobGas;
         this.versionedHashes = versionedHashes;
         this.blobs = Optional.ofNullable(blobs);
@@ -90,7 +148,33 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
             BigInteger value,
             String data,
             BigInteger maxFeePerBlobGas) {
-        super(chainId, nonce, gasLimit, to, value, data, maxPriorityFeePerGas, maxFeePerGas);
+        this(
+                blobsData,
+                chainId,
+                nonce,
+                maxPriorityFeePerGas,
+                maxFeePerGas,
+                gasLimit,
+                to,
+                value,
+                data,
+                maxFeePerBlobGas,
+                Collections.emptyList());
+    }
+
+    protected Transaction4844(
+            List<Blob> blobsData,
+            long chainId,
+            BigInteger nonce,
+            BigInteger maxPriorityFeePerGas,
+            BigInteger maxFeePerGas,
+            BigInteger gasLimit,
+            String to,
+            BigInteger value,
+            String data,
+            BigInteger maxFeePerBlobGas,
+            List<org.web3j.crypto.AccessListObject> accessList) {
+        super(chainId, nonce, gasLimit, to, value, data, maxPriorityFeePerGas, maxFeePerGas, accessList);
         this.maxFeePerBlobGas = maxFeePerBlobGas;
         this.blobs = Optional.ofNullable(blobsData);
 
@@ -153,20 +237,25 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
             resultTx.add(
                     RlpString.create(
                             org.web3j.utils.Bytes.trimLeadingZeroes(signatureData.getS())));
-
-            List<RlpType> result = new ArrayList<>();
-            result.add(new RlpList(resultTx));
-
-            // Adding blobs, commitments, and proofs
-            result.add(new RlpList(getRlpBlobs()));
-            result.add(new RlpList(getRlpKzgCommitments()));
-            result.add(new RlpList(getRlpKzgProofs()));
-
-            return result;
-        } else {
-            // encoding for signature, blob sidecar cannot be added
-            return resultTx;
         }
+        return resultTx;
+    }
+
+    @Override
+    public List<RlpType> asNetworkRlpValues(Sign.SignatureData signatureData) {
+        if (signatureData == null) {
+            return asRlpValues(null);
+        }
+
+        List<RlpType> result = new ArrayList<>();
+        result.add(new RlpList(asRlpValues(signatureData)));
+
+        // Adding blobs, commitments, and proofs
+        result.add(new RlpList(getRlpBlobs()));
+        result.add(new RlpList(getRlpKzgCommitments()));
+        result.add(new RlpList(getRlpKzgProofs()));
+
+        return result;
     }
 
     public static Transaction4844 createTransaction(
@@ -182,7 +271,8 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
             BigInteger value,
             String data,
             BigInteger maxFeePerBlobGas,
-            List<Bytes> versionedHashes) {
+            List<Bytes> versionedHashes,
+            List<org.web3j.crypto.AccessListObject> accessList) {
 
         return new Transaction4844(
                 blobs,
@@ -197,7 +287,8 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
                 value,
                 data,
                 maxFeePerBlobGas,
-                versionedHashes);
+                versionedHashes,
+                accessList);
     }
 
     public static Transaction4844 createTransaction(
@@ -210,7 +301,8 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
             String to,
             BigInteger value,
             String data,
-            BigInteger maxFeePerBlobGas) {
+            BigInteger maxFeePerBlobGas,
+            List<org.web3j.crypto.AccessListObject> accessList) {
 
         return new Transaction4844(
                 blobs,
@@ -222,7 +314,8 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
                 to,
                 value,
                 data,
-                maxFeePerBlobGas);
+                maxFeePerBlobGas,
+                accessList);
     }
 
     public static Transaction4844 createTransaction(
@@ -235,7 +328,8 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
             BigInteger value,
             String data,
             BigInteger maxFeePerBlobGas,
-            List<Bytes> versionedHashes) {
+            List<Bytes> versionedHashes,
+            List<org.web3j.crypto.AccessListObject> accessList) {
 
         return new Transaction4844(
                 chainId,
@@ -247,7 +341,8 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
                 value,
                 data,
                 maxFeePerBlobGas,
-                versionedHashes);
+                versionedHashes,
+                accessList);
     }
 
     public BigInteger getMaxFeePerBlobGas() {

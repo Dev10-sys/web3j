@@ -153,6 +153,9 @@ public class TransactionDecoder {
         final String to = ((RlpString) txValues.get(5)).asString();
         final BigInteger value = ((RlpString) txValues.get(6)).asPositiveBigInteger();
         final String data = ((RlpString) txValues.get(7)).asString();
+        final List<RlpType> accessListRlp = ((RlpList) txValues.get(8)).getValues();
+        final List<AccessListObject> accessList = decodeAccessList(accessListRlp);
+
         final BigInteger maxFeePerBlobGas = ((RlpString) txValues.get(9)).asPositiveBigInteger();
         final List<Bytes> versionedHashes =
                 decodeVersionedHashes(((RlpList) txValues.get(10)).getValues());
@@ -172,7 +175,8 @@ public class TransactionDecoder {
                         value,
                         data,
                         maxFeePerBlobGas,
-                        versionedHashes);
+                        versionedHashes,
+                        accessList);
 
         // Handle signature if present
         if (txValues.size() > UNSIGNED_EIP4844TX_RLP_LIST_SIZE) {

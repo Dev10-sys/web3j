@@ -38,16 +38,38 @@ public class TransactionEncoder {
      * @return signature
      */
     public static byte[] signMessage(RawTransaction rawTransaction, Credentials credentials) {
+        Sign.SignatureData signatureData =
+                signMessageToSignatureData(rawTransaction, credentials);
+
+        return encodeNetwork(rawTransaction, signatureData);
+    }
+
+    public static Sign.SignatureData signMessageToSignatureData(
+            RawTransaction rawTransaction, Credentials credentials) {
         byte[] encodedTransaction;
         if (rawTransaction.getTransaction().getType().isEip4844()) {
             encodedTransaction = encode4844(rawTransaction);
         } else {
             encodedTransaction = encode(rawTransaction);
         }
+        return Sign.signMessage(encodedTransaction, credentials.getEcKeyPair());
+    }
+
+    public static Sign.SignatureData signMessageToSignatureData(
+            RawTransaction rawTransaction, long chainId, Credentials credentials) {
+        // EIP-1559 and others handle chainId internally
+        if (rawTransaction.getType().isEip1559()
+                || rawTransaction.getType().isEip2930()
+                || rawTransaction.getType().isEip4844()
+                || rawTransaction.getType().isEip7702()) {
+            return signMessageToSignatureData(rawTransaction, credentials);
+        }
+
+        byte[] encodedTransaction = encode(rawTransaction, chainId);
         Sign.SignatureData signatureData =
                 Sign.signMessage(encodedTransaction, credentials.getEcKeyPair());
 
-        return encode(rawTransaction, signatureData);
+        return createEip155SignatureData(signatureData, chainId);
     }
 
     /**
@@ -138,6 +160,22 @@ public class TransactionEncoder {
         List<RlpType> values = asRlpValues(rawTransaction, null);
         RlpList rlpList = new RlpList(values);
 
+        byte[] encoded = RlpEncoder.encode(rlpList);
+
+        return ByteBuffer.allocate(encoded.length + 1)
+                .put(rawTransaction.getType().getRlpType())
+                .put(encoded)
+                .array();
+    }
+
+    public static byte[] encodeNetwork(
+            RawTransaction rawTransaction, Sign.SignatureData signatureData) {
+        if (!rawTransaction.getType().isEip4844()) {
+            return encode(rawTransaction, signatureData);
+        }
+
+        List<RlpType> values = rawTransaction.getTransaction().asNetworkRlpValues(signatureData);
+        RlpList rlpList = new RlpList(values);
         byte[] encoded = RlpEncoder.encode(rlpList);
 
         return ByteBuffer.allocate(encoded.length + 1)

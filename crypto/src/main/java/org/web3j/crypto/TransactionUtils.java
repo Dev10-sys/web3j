@@ -28,8 +28,9 @@ public class TransactionUtils {
      */
     public static byte[] generateTransactionHash(
             RawTransaction rawTransaction, Credentials credentials) {
-        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, credentials);
-        return Hash.sha3(signedMessage);
+        Sign.SignatureData signatureData =
+                TransactionEncoder.signMessageToSignatureData(rawTransaction, credentials);
+        return Hash.sha3(TransactionEncoder.encode(rawTransaction, signatureData));
     }
 
     /**
@@ -42,8 +43,10 @@ public class TransactionUtils {
      */
     public static byte[] generateTransactionHash(
             RawTransaction rawTransaction, byte chainId, Credentials credentials) {
-        byte[] signedMessage = TransactionEncoder.signMessage(rawTransaction, chainId, credentials);
-        return Hash.sha3(signedMessage);
+        Sign.SignatureData signatureData =
+                TransactionEncoder.signMessageToSignatureData(
+                        rawTransaction, (long) chainId, credentials);
+        return Hash.sha3(TransactionEncoder.encode(rawTransaction, signatureData));
     }
 
     /**
