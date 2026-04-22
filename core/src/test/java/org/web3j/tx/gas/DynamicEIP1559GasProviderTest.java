@@ -78,4 +78,53 @@ public class DynamicEIP1559GasProviderTest {
                         + maxFee
                         + ")");
     }
+
+    @Test
+    public void testMaxPriorityFeeExceedingMaxFee() throws Exception {
+        Web3j web3j = mock(Web3j.class);
+        DynamicEIP1559GasProvider provider =
+                new DynamicEIP1559GasProvider(web3j, 1, PriorityGasProvider.Priority.NORMAL);
+
+        EthBlock ethBlock = mock(EthBlock.class);
+        EthBlock.Block block = mock(EthBlock.Block.class);
+        // Base Fee: 1
+        when(block.getBaseFeePerGas()).thenReturn(BigInteger.ONE);
+        when(ethBlock.getBlock()).thenReturn(block);
+
+        Request<?, EthBlock> ethBlockRequest = mock(Request.class);
+        when(ethBlockRequest.send()).thenReturn(ethBlock);
+        when(web3j.ethGetBlockByNumber(any(), Mockito.anyBoolean()))
+                .thenReturn((Request) ethBlockRequest);
+
+        EthMaxPriorityFeePerGas ethMaxPriorityFeePerGas = mock(EthMaxPriorityFeePerGas.class);
+        // Priority Fee: 100
+        when(ethMaxPriorityFeePerGas.getMaxPriorityFeePerGas()).thenReturn(BigInteger.valueOf(100));
+        when(ethMaxPriorityFeePerGas.hasError()).thenReturn(false);
+
+        Request<?, EthMaxPriorityFeePerGas> priorityFeeRequest = mock(Request.class);
+        when(priorityFeeRequest.send()).thenReturn(ethMaxPriorityFeePerGas);
+        when(web3j.ethMaxPriorityFeePerGas()).thenReturn((Request) priorityFeeRequest);
+
+        BigInteger maxPriorityFee = provider.getMaxPriorityFeePerGas(); // 100
+        BigInteger maxFee = provider.getMaxFeePerGas(); // 2*1 + 100 = 102
+
+        assertTrue(
+                maxPriorityFee.compareTo(maxFee) <= 0,
+                "maxPriorityFeePerGas ("
+                        + maxPriorityFee
+                        + ") should not exceed maxFeePerGas ("
+                        + maxFee
+                        + ")");
+
+        // Even with base fee of 0
+        when(block.getBaseFeePerGas()).thenReturn(BigInteger.ZERO);
+        maxFee = provider.getMaxFeePerGas(); // 2*0 + 100 = 100
+        assertTrue(
+                maxPriorityFee.compareTo(maxFee) <= 0,
+                "maxPriorityFeePerGas ("
+                        + maxPriorityFee
+                        + ") should not exceed maxFeePerGas ("
+                        + maxFee
+                        + ") with zero base fee");
+    }
 }

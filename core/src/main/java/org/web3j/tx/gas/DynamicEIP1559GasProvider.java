@@ -19,6 +19,7 @@ import java.math.BigInteger;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.request.Transaction;
+import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthEstimateGas;
 import org.web3j.protocol.core.methods.response.EthGasPrice;
 import org.web3j.protocol.core.methods.response.EthMaxPriorityFeePerGas;
@@ -55,15 +56,22 @@ public class DynamicEIP1559GasProvider implements ContractEIP1559GasProvider, Pr
     @Override
     public BigInteger getMaxFeePerGas() {
         try {
-            BigInteger baseFee =
-                    web3j.ethGetBlockByNumber(DefaultBlockParameterName.LATEST, false)
-                            .send()
-                            .getBlock()
-                            .getBaseFeePerGas();
+            EthBlock ethBlock =
+                    web3j.ethGetBlockByNumber(DefaultBlockParameterName.LATEST, false).send();
+            if (ethBlock == null
+                    || ethBlock.getBlock() == null
+                    || ethBlock.getBlock().getBaseFeePerGas() == null) {
+                throw new RuntimeException("Failed to fetch base fee from latest block");
+            }
+            BigInteger baseFee = ethBlock.getBlock().getBaseFeePerGas();
 
             BigInteger maxPriorityFeePerGas = getMaxPriorityFeePerGas();
-            BigInteger maxFee = baseFee.multiply(BigInteger.valueOf(2)).add(maxPriorityFeePerGas);
-            return maxFee.max(lastMaxPriorityFeePerGas);
+            BigInteger maxFee =
+                    baseFee.multiply(BigInteger.valueOf(2))
+                            .add(maxPriorityFeePerGas)
+                            .max(lastMaxPriorityFeePerGas)
+                            .max(BigInteger.ZERO);
+            return maxFee;
         } catch (Exception e) {
             throw new RuntimeException("Failed to get ethMaxFeePerGas", e);
         }
@@ -73,6 +81,11 @@ public class DynamicEIP1559GasProvider implements ContractEIP1559GasProvider, Pr
     public BigInteger getMaxPriorityFeePerGas() {
         BigInteger currentPriorityFee =
                 applyPriority(fetchMaxPriorityFeePerGas(), priority, customMultiplier);
+
+        if (currentPriorityFee.compareTo(BigInteger.ZERO) < 0) {
+            currentPriorityFee = BigInteger.ZERO;
+        }
+
         if (currentPriorityFee.compareTo(lastMaxPriorityFeePerGas) > 0) {
             lastMaxPriorityFeePerGas = currentPriorityFee;
         }
