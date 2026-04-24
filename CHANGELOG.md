@@ -8,7 +8,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 ### Bug Fixes
 
 * Replace raw usage of `EthLog.LogResult` with parameterized type to improve type safety (#2252)
-(https://github.com/LFDT-web3j/web3j/pull/2254)
+* Fix ensure QueuingTransactionReceiptProcessor executor is properly shut down to avoid JVM hang (#2265)
 
 ### Features
 
