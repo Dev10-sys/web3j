@@ -16,6 +16,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -25,44 +26,62 @@ public class Async {
     private Async() {}
 
     /**
-     * Shared executor used for async operations.
-     * Use {@link #shutdown()} to stop it and prevent ClassLoader leaks during web app undeployment.
+     * Shared executor used for async operations. Use {@link #shutdown()} to stop it and prevent
+     * ClassLoader leaks during web app undeployment.
      */
-    private static final ExecutorService executor = Executors.newCachedThreadPool();
+    private static volatile ExecutorService executor;
 
-    static {
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> shutdown(executor)));
+    private static ExecutorService getExecutor() {
+        ExecutorService result = executor;
+        if (result == null || result.isShutdown() || result.isTerminated()) {
+            synchronized (Async.class) {
+                result = executor;
+                if (result == null || result.isShutdown() || result.isTerminated()) {
+                    executor =
+                            result =
+                                    Executors.newCachedThreadPool(
+                                            r -> {
+                                                Thread t = new Thread(r);
+                                                t.setName("web3j-async");
+                                                t.setDaemon(true);
+                                                return t;
+                                            });
+                }
+            }
+        }
+        return result;
     }
 
     /**
-     * Stops the shared executor service.
-     * Useful in web containers to release threads and prevent ClassLoader leaks.
+     * Stops the shared executor service. Useful in web containers to release threads and prevent
+     * ClassLoader leaks.
      */
     public static void shutdown() {
-        executor.shutdown();
-        try {
-            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                executor.shutdownNow();
+        synchronized (Async.class) {
+            if (executor != null && !executor.isShutdown()) {
+                shutdown(executor);
+                executor = null;
             }
-        } catch (InterruptedException e) {
-            executor.shutdownNow();
-            Thread.currentThread().interrupt();
         }
     }
 
     public static <T> CompletableFuture<T> run(Callable<T> callable) {
         CompletableFuture<T> result = new CompletableFuture<>();
-        CompletableFuture.runAsync(
-                () -> {
-                    // we need to explicitly catch any exceptions,
-                    // otherwise they will be silently discarded
-                    try {
-                        result.complete(callable.call());
-                    } catch (Throwable e) {
-                        result.completeExceptionally(e);
-                    }
-                },
-                executor);
+        try {
+            CompletableFuture.runAsync(
+                    () -> {
+                        // we need to explicitly catch any exceptions,
+                        // otherwise they will be silently discarded
+                        try {
+                            result.complete(callable.call());
+                        } catch (Throwable throwable) {
+                            result.completeExceptionally(throwable);
+                        }
+                    },
+                    getExecutor());
+        } catch (RejectedExecutionException e) {
+            result.completeExceptionally(e);
+        }
         return result;
     }
 
