@@ -1,4 +1,4 @@
-# Change Log
+﻿# Change Log
 
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
@@ -7,6 +7,9 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Bug Fixes
 
+* Fix Async executor lifecycle to support safe shutdown and reuse (#2244)
+* Fix Async executor lifecycle to safely recreate executor after shutdown and prevent RejectedExecutionException (#2255)
+* Replace raw usage of EthLog.LogResult with parameterized type to improve type safety (#2252)
 * Fix incorrect EIP-4844 transaction encoding for signing by excluding blob sidecar from signing RLP (#2257)
 * Replace raw usage of EthLog.LogResult with parameterized type to improve type safety (#2252)
 
