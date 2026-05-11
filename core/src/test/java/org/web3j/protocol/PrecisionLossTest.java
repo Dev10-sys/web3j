@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class PrecisionLossTest {
 
     @Test
-    public void testPrecisionLossWithWeb3jMapper() {
+    public void testPrecisionLossWithWeb3jMapper() throws Exception {
         // Use the ObjectMapper from our factory which now has the fix applied
         ObjectMapper mapper = ObjectMapperFactory.getObjectMapper();
 
@@ -35,36 +35,29 @@ public class PrecisionLossTest {
         String jsonArray =
                 "[{\"balance\":209338520.59559551,\"received\":209338520.59559551,\"immature\":0.00000000}]";
 
-        try {
-            // Test single object
-            var tree = mapper.readTree(json);
-            var balance = mapper.treeToValue(tree, OriginalAddressRangeBalance2.class);
-            System.out.println("Single object balance: " + balance.getBalance());
+        // Test single object
+        var tree = mapper.readTree(json);
+        var balance = mapper.treeToValue(tree, OriginalAddressRangeBalance2.class);
 
-            // Test array (as used in sendBatch)
-            ArrayNode nodes = (ArrayNode) mapper.readTree(jsonArray);
-            List<OriginalAddressRangeBalance2> balances = new ArrayList<>();
-            for (int i = 0; i < nodes.size(); i++) {
-                var b = mapper.treeToValue(nodes.get(i), OriginalAddressRangeBalance2.class);
-                balances.add(b);
-            }
-            System.out.println("Batch balance: " + balances.get(0).getBalance());
-
-            // Expected value: 209338520.59559551
-            BigDecimal expected = new BigDecimal("209338520.59559551");
-
-            assertEquals(
-                    0,
-                    expected.compareTo(balance.getBalance()),
-                    "Single object balance precision loss with Web3j mapper");
-            assertEquals(
-                    0,
-                    expected.compareTo(balances.get(0).getBalance()),
-                    "Batch balance precision loss with Web3j mapper");
-
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+        // Test array (as used in sendBatch)
+        ArrayNode nodes = (ArrayNode) mapper.readTree(jsonArray);
+        List<OriginalAddressRangeBalance2> balances = new ArrayList<>();
+        for (int i = 0; i < nodes.size(); i++) {
+            var b = mapper.treeToValue(nodes.get(i), OriginalAddressRangeBalance2.class);
+            balances.add(b);
         }
+
+        // Expected value: 209338520.59559551
+        BigDecimal expected = new BigDecimal("209338520.59559551");
+
+        assertEquals(
+                0,
+                expected.compareTo(balance.getBalance()),
+                "Single object balance precision loss with Web3j mapper");
+        assertEquals(
+                0,
+                expected.compareTo(balances.get(0).getBalance()),
+                "Batch balance precision loss with Web3j mapper");
     }
 
     public static class OriginalAddressRangeBalance2 {
