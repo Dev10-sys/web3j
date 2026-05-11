@@ -12,7 +12,6 @@
  */
 package org.web3j.tx.response;
 
-import java.lang.reflect.Field;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.junit.jupiter.api.Test;
@@ -33,7 +32,7 @@ public class QueuingTransactionReceiptProcessorTest {
         QueuingTransactionReceiptProcessor processor =
                 new QueuingTransactionReceiptProcessor(web3j, callback, 10, 1000);
 
-        ScheduledExecutorService executor = getExecutor(processor);
+        ScheduledExecutorService executor = processor.scheduledExecutorService;
 
         assertFalse(executor.isShutdown(), "Executor should not be shutdown initially");
 
@@ -51,11 +50,11 @@ public class QueuingTransactionReceiptProcessorTest {
                 new QueuingTransactionReceiptProcessor(web3j, callback, 10, 1000);
 
         processor.shutdown();
-        assertTrue(getExecutor(processor).isShutdown());
+        assertTrue(processor.scheduledExecutorService.isShutdown());
 
         // Calling shutdown again should not throw any exception
         processor.shutdown();
-        assertTrue(getExecutor(processor).isShutdown());
+        assertTrue(processor.scheduledExecutorService.isShutdown());
     }
 
     @Test
@@ -66,7 +65,7 @@ public class QueuingTransactionReceiptProcessorTest {
         ScheduledExecutorService executor;
         try (QueuingTransactionReceiptProcessor processor =
                 new QueuingTransactionReceiptProcessor(web3j, callback, 10, 1000)) {
-            executor = getExecutor(processor);
+            executor = processor.scheduledExecutorService;
             assertFalse(executor.isShutdown());
         }
 
@@ -80,7 +79,7 @@ public class QueuingTransactionReceiptProcessorTest {
 
         try (QueuingTransactionReceiptProcessor processor =
                 new QueuingTransactionReceiptProcessor(web3j, callback, 10, 1000)) {
-            ScheduledExecutorService executor = getExecutor(processor);
+            ScheduledExecutorService executor = processor.scheduledExecutorService;
 
             // We submit a task and check the thread properties
             Boolean isDaemon =
@@ -90,12 +89,5 @@ public class QueuingTransactionReceiptProcessorTest {
         }
     }
 
-    private ScheduledExecutorService getExecutor(QueuingTransactionReceiptProcessor processor)
-            throws Exception {
-        Field executorField =
-                QueuingTransactionReceiptProcessor.class.getDeclaredField(
-                        "scheduledExecutorService");
-        executorField.setAccessible(true);
-        return (ScheduledExecutorService) executorField.get(processor);
-    }
+
 }

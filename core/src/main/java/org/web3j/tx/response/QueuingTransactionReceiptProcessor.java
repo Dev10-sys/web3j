@@ -36,7 +36,7 @@ public class QueuingTransactionReceiptProcessor extends TransactionReceiptProces
 
     private final int pollingAttemptsPerTxHash;
 
-    private final ScheduledExecutorService scheduledExecutorService;
+    final ScheduledExecutorService scheduledExecutorService;
     private final Callback callback;
     private final BlockingQueue<RequestWrapper> pendingTransactions;
 
