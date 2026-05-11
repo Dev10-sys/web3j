@@ -178,27 +178,32 @@ public class Transaction4844 extends Transaction1559 implements ITransaction {
         this.maxFeePerBlobGas = maxFeePerBlobGas;
         this.blobs = Optional.ofNullable(blobsData);
 
-        assert blobsData != null;
-        this.kzgCommitments =
-                Optional.of(
-                        blobsData.stream()
-                                .map(BlobUtils::getCommitment)
-                                .collect(Collectors.toList()));
+        if (blobsData != null) {
+            this.kzgCommitments =
+                    Optional.of(
+                            blobsData.stream()
+                                    .map(BlobUtils::getCommitment)
+                                    .collect(Collectors.toList()));
 
-        this.kzgProofs =
-                Optional.of(
-                        IntStream.range(0, blobsData.size())
-                                .mapToObj(
-                                        i ->
-                                                BlobUtils.getProof(
-                                                        blobsData.get(i),
-                                                        this.kzgCommitments.get().get(i)))
-                                .collect(Collectors.toList()));
+            this.kzgProofs =
+                    Optional.of(
+                            IntStream.range(0, blobsData.size())
+                                    .mapToObj(
+                                            i ->
+                                                    BlobUtils.getProof(
+                                                            blobsData.get(i),
+                                                            this.kzgCommitments.get().get(i)))
+                                    .collect(Collectors.toList()));
 
-        this.versionedHashes =
-                this.kzgCommitments.get().stream()
-                        .map(BlobUtils::kzgToVersionedHash)
-                        .collect(Collectors.toList());
+            this.versionedHashes =
+                    this.kzgCommitments.get().stream()
+                            .map(BlobUtils::kzgToVersionedHash)
+                            .collect(Collectors.toList());
+        } else {
+            this.kzgCommitments = Optional.empty();
+            this.kzgProofs = Optional.empty();
+            this.versionedHashes = Collections.emptyList();
+        }
     }
 
     @Override
