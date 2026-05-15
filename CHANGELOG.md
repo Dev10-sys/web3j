@@ -10,6 +10,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 * Fix Async executor lifecycle to support safe shutdown and reuse (#2244)
 * Fix Async executor lifecycle to safely recreate executor after shutdown and prevent RejectedExecutionException (#2255)
 * Replace raw usage of EthLog.LogResult with parameterized type to improve type safety (#2252)
+* Fix `org.web3j.protocol.core.methods.response.Transaction` serialization failure when fee fields are null (#1830)
 
 ### Features
 
