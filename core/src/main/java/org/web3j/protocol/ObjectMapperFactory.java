@@ -35,6 +35,7 @@ public class ObjectMapperFactory {
         JsonMapper.Builder builder =
                 JsonMapper.builder()
                         .enable(JsonReadFeature.ALLOW_UNQUOTED_PROPERTY_NAMES)
+                        .enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
                         .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                         .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES);
 

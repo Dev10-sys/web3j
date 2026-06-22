@@ -7,7 +7,8 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Bug Fixes
 
--
+- Fix precision loss in batch RPC deserialization by using BigDecimal for float values [#2268](https://github.com/LFDT-web3j/web3j/pull/2268)
+
 
 ### Features
 
