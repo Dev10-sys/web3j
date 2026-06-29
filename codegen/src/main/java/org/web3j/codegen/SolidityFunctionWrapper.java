@@ -752,12 +752,15 @@ public class SolidityFunctionWrapper extends Generator {
                                 ? "_" + component.getName()
                                 : component.getName();
                 builder.addField(typeName, componentName, Modifier.PUBLIC);
-                constructorBuilder.addParameter(typeName, componentName);
+                ParameterSpec.Builder parameterBuilder =
+                        ParameterSpec.builder(typeName, componentName);
                 ParameterSpec.Builder nativeParameterBuilder =
                         ParameterSpec.builder(nativeTypeName, componentName);
                 if (annotationSpec != null) {
+                    parameterBuilder.addAnnotation(annotationSpec);
                     nativeParameterBuilder.addAnnotation(annotationSpec);
                 }
+                constructorBuilder.addParameter(parameterBuilder.build());
                 nativeConstructorBuilder.addParameter(nativeParameterBuilder.build());
 
                 constructorBuilder.addStatement("this." + componentName + " = " + componentName);
