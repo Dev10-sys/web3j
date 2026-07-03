@@ -13,13 +13,12 @@
 package org.web3j.protocol.core.methods.response;
 
 import java.math.BigInteger;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.web3j.protocol.core.Response;
 
@@ -27,41 +26,38 @@ import org.web3j.protocol.core.Response;
 public final class TxPoolContentFrom extends Response<TxPoolContentFrom.TxPoolContentFromResult> {
     public static class TxPoolContentFromResult {
 
-        private Map<String, Map<BigInteger, Transaction>> pending;
-        private Map<String, Map<BigInteger, Transaction>> queued;
+        private Map<BigInteger, Transaction> pending;
+        private Map<BigInteger, Transaction> queued;
 
         public TxPoolContentFromResult() {}
 
         public TxPoolContentFromResult(
-                Map<String, Map<BigInteger, Transaction>> pending,
-                Map<String, Map<BigInteger, Transaction>> queued) {
-            this.pending = immutableCopy(pending, val -> immutableCopy(val, Function.identity()));
-            this.queued = immutableCopy(queued, val -> immutableCopy(val, Function.identity()));
+                Map<BigInteger, Transaction> pending,
+                Map<BigInteger, Transaction> queued) {
+            this.pending = immutableCopy(pending, Function.identity());
+            this.queued = immutableCopy(queued, Function.identity());
         }
 
-        public Map<String, Map<BigInteger, Transaction>> getPending() {
+        public Map<BigInteger, Transaction> getPending() {
             return pending;
         }
 
-        public Map<String, Map<BigInteger, Transaction>> getQueued() {
+        public Map<BigInteger, Transaction> getQueued() {
             return queued;
         }
 
         public List<Transaction> getPendingTransactions() {
-            return pending.values().stream()
-                    .map(Map::values)
-                    .flatMap(Collection::stream)
-                    .collect(Collectors.toList());
+            return pending == null ? Collections.emptyList() : new ArrayList<>(pending.values());
         }
 
         public List<Transaction> getQueuedTransactions() {
-            return queued.values().stream()
-                    .map(Map::values)
-                    .flatMap(Collection::stream)
-                    .collect(Collectors.toList());
+            return queued == null ? Collections.emptyList() : new ArrayList<>(queued.values());
         }
 
         private static <K, V> Map<K, V> immutableCopy(Map<K, V> map, Function<V, V> valueMapper) {
+            if (map == null) {
+                return Collections.emptyMap();
+            }
             Map<K, V> result = new HashMap<>();
             for (Map.Entry<K, V> entry : map.entrySet()) {
                 K key = entry.getKey();

@@ -45,6 +45,9 @@ public final class TxPoolInspect extends Response<TxPoolInspect.TxPoolInspectRes
         }
 
         private static <K, V> Map<K, V> immutableCopy(Map<K, V> map, Function<V, V> valueMapper) {
+            if (map == null) {
+                return Collections.emptyMap();
+            }
             Map<K, V> result = new HashMap<>();
             for (Map.Entry<K, V> entry : map.entrySet()) {
                 K key = entry.getKey();
