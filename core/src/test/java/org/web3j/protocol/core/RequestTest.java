@@ -157,6 +157,14 @@ class RequestTest extends RequestTester {
     }
 
     @Test
+    void testTxPoolInspect() throws Exception {
+        web3j.txPoolInspect().send();
+
+        verifyResult(
+                "{\"jsonrpc\":\"2.0\",\"method\":\"txpool_inspect\",\"params\":[],\"id\":1}");
+    }
+
+    @Test
     void testEthGasPrice() throws Exception {
         web3j.ethGasPrice().send();
 

@@ -94,6 +94,7 @@ import org.web3j.protocol.core.methods.response.ShhNewIdentity;
 import org.web3j.protocol.core.methods.response.ShhUninstallFilter;
 import org.web3j.protocol.core.methods.response.ShhVersion;
 import org.web3j.protocol.core.methods.response.TxPoolContentFrom;
+import org.web3j.protocol.core.methods.response.TxPoolInspect;
 import org.web3j.protocol.core.methods.response.TxPoolStatus;
 import org.web3j.protocol.core.methods.response.Web3ClientVersion;
 import org.web3j.protocol.core.methods.response.Web3Sha3;
@@ -826,6 +827,15 @@ public class JsonRpc2_0Web3j implements Web3j {
                 Arrays.asList(address),
                 web3jService,
                 TxPoolContentFrom.class);
+    }
+
+    @Override
+    public Request<?, TxPoolInspect> txPoolInspect() {
+        return new Request<>(
+                "txpool_inspect",
+                Collections.<String>emptyList(),
+                web3jService,
+                TxPoolInspect.class);
     }
 
     @Override
