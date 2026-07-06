@@ -1962,7 +1962,9 @@ public class SolidityFunctionWrapper extends Generator {
         for (org.web3j.codegen.SolidityFunctionWrapper.NamedTypeName namedType :
                 indexedParameters) {
             final TypeName typeName;
-            if (namedType.getType().equals("tuple")) {
+            if (isHashedIndexedType(namedType.getType())) {
+                typeName = useNativeJavaTypes ? TypeName.get(byte[].class) : ClassName.get("org.web3j.abi.datatypes.generated", "Bytes32");
+            } else if (namedType.getType().equals("tuple")) {
                 typeName = structClassNameMap.get(namedType.structIdentifier());
             } else if (namedType.getType().startsWith("tuple")
                     && namedType.getType().contains("[")) {
@@ -2191,17 +2193,24 @@ public class SolidityFunctionWrapper extends Generator {
         for (int i = 0; i < indexedParameters.size(); i++) {
             final NamedTypeName namedTypeName = indexedParameters.get(i);
             final String nativeConversion;
-            if (useNativeJavaTypes
-                    && structClassNameMap.values().stream()
+            if (useNativeJavaTypes) {
+                if (isHashedIndexedType(namedTypeName.getType())) {
+                    nativeConversion = ".getValue()";
+                } else if (structClassNameMap.values().stream()
                             .map(ClassName::simpleName)
                             .noneMatch(
                                     name -> name.equals(namedTypeName.getTypeName().toString()))) {
-                nativeConversion = ".getValue()";
+                    nativeConversion = ".getValue()";
+                } else {
+                    nativeConversion = "";
+                }
             } else {
                 nativeConversion = "";
             }
             final TypeName indexedEventWrapperType;
-            if (namedTypeName.getType().equals("tuple")) {
+            if (isHashedIndexedType(namedTypeName.getType())) {
+                indexedEventWrapperType = useNativeJavaTypes ? TypeName.get(byte[].class) : ClassName.get("org.web3j.abi.datatypes.generated", "Bytes32");
+            } else if (namedTypeName.getType().equals("tuple")) {
                 indexedEventWrapperType = structClassNameMap.get(namedTypeName.structIdentifier());
             } else if (namedTypeName.getType().startsWith("tuple")
                     && namedTypeName.getType().contains("[")) {
@@ -2466,6 +2475,14 @@ public class SolidityFunctionWrapper extends Generator {
         } else {
             return FUNC_NAME_PREFIX + funcName;
         }
+    }
+
+    private static boolean isHashedIndexedType(String solidityType) {
+        return solidityType.contains("[")
+                || solidityType.equals("string")
+                || solidityType.equals("bytes")
+                || solidityType.equals("tuple")
+                || solidityType.startsWith("tuple");
     }
 
     private static class NamedTypeName {
