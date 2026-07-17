@@ -2,8 +2,9 @@ description 'web3j integration tests'
 
 
 repositories {
-    maven { url 'https://oss.sonatype.org/content/repositories/releases/' }
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+    repositories.removeIf { repo ->
+        repo instanceof MavenArtifactRepository && repo.url.toString().contains('oss.sonatype.org')
+    }
     maven { url "https://hyperledger.jfrog.io/artifactory/besu-maven/" }
     maven { url "https://artifacts.consensys.net/public/maven/maven/" }
     maven { url "https://splunk.jfrog.io/splunk/ext-releases-local" }
