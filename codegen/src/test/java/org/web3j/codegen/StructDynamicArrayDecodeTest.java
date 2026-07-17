@@ -12,11 +12,13 @@ import com.squareup.javapoet.TypeSpec;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import org.web3j.abi.DefaultFunctionEncoder;
 import org.web3j.abi.DefaultFunctionReturnDecoder;
 import org.web3j.abi.TypeReference;
 import org.web3j.abi.datatypes.Address;
 import org.web3j.abi.datatypes.DynamicArray;
 import org.web3j.abi.datatypes.DynamicStruct;
+import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.abi.datatypes.reflection.Parameterized;
@@ -96,11 +98,91 @@ public class StructDynamicArrayDecodeTest {
         assertEquals(2, decoded.addrArr.getValue().size());
     }
 
+    @Test
+    public void testDecodingNestedWithParameterizedAnnotation() {
+        // ABI encoding of address[][] containing [[address1, address2]]
+        // Dynamic offset for nestedAddr: 0x20 (32 bytes)
+        // nestedAddr length: 1
+        // nestedAddr[0] offset: 0x20 (32 bytes relative to nestedAddr start)
+        // nestedAddr[0] length: 2
+        // address1: 0x1234567890123456789012345678901234567890
+        // address2: 0x0987654321098765432109876543210987654321
+        String encoded = 
+                "0000000000000000000000000000000000000000000000000000000000000020" + // struct offset to nestedAddr
+                "0000000000000000000000000000000000000000000000000000000000000020" + // nestedAddr length = 1
+                "0000000000000000000000000000000000000000000000000000000000000001" + 
+                "0000000000000000000000000000000000000000000000000000000000000020" + // inner array offset = 32
+                "0000000000000000000000000000000000000000000000000000000000000002" + // inner array length = 2
+                "0000000000000000000000001234567890123456789012345678901234567890" + // address 1
+                "0000000000000000000000000987654321098765432109876543210987654321";  // address 2
+
+        DefaultFunctionReturnDecoder decoder = new DefaultFunctionReturnDecoder();
+        @SuppressWarnings("unchecked")
+        List<TypeReference<Type>> typeReferences = Collections.singletonList(
+                (TypeReference<Type>) (TypeReference) new TypeReference<TestNestedStruct>() {});
+
+        List<Type> results = decoder.decodeFunctionResult(encoded, typeReferences);
+        
+        assertNotNull(results);
+        TestNestedStruct decoded = (TestNestedStruct) results.get(0);
+        assertEquals(1, decoded.nestedAddr.getValue().size());
+        assertEquals(2, decoded.nestedAddr.getValue().get(0).getValue().size());
+    }
+
+    @Test
+    public void testEncodingAndDecodingNestedStructRoundtrip() {
+        Address addr1 = new Address("0x1234567890123456789012345678901234567890");
+        Address addr2 = new Address("0x0987654321098765432109876543210987654321");
+        DynamicArray<Address> innerArray = new DynamicArray<>(Address.class, addr1, addr2);
+        DynamicArray<DynamicArray<Address>> outerArray = new DynamicArray<>(
+                (Class<DynamicArray<Address>>) (Class) DynamicArray.class,
+                innerArray
+        );
+
+        TestNestedStruct originalStruct = new TestNestedStruct(outerArray);
+
+        Function function = new Function(
+                "testFunction",
+                Collections.singletonList(originalStruct),
+                Collections.emptyList()
+        );
+
+        DefaultFunctionEncoder encoder = new DefaultFunctionEncoder();
+        String encoded = encoder.encode(function);
+        
+        // Strip method ID (4 bytes/8 chars) and "0x"
+        String encodedParameters = encoded.substring(10);
+
+        DefaultFunctionReturnDecoder decoder = new DefaultFunctionReturnDecoder();
+        @SuppressWarnings("unchecked")
+        List<TypeReference<Type>> typeReferences = Collections.singletonList(
+                (TypeReference<Type>) (TypeReference) new TypeReference<TestNestedStruct>() {});
+
+        List<Type> results = decoder.decodeFunctionResult(encodedParameters, typeReferences);
+
+        assertNotNull(results);
+        assertEquals(1, results.size());
+        TestNestedStruct decodedStruct = (TestNestedStruct) results.get(0);
+        
+        assertEquals(1, decodedStruct.nestedAddr.getValue().size());
+        assertEquals(2, decodedStruct.nestedAddr.getValue().get(0).getValue().size());
+        assertEquals(addr1.getValue(), decodedStruct.nestedAddr.getValue().get(0).getValue().get(0).getValue());
+        assertEquals(addr2.getValue(), decodedStruct.nestedAddr.getValue().get(0).getValue().get(1).getValue());
+    }
+
     public static class TestStruct extends DynamicStruct {
         public DynamicArray<Address> addrArr;
         public TestStruct(@Parameterized(type = Address.class) DynamicArray<Address> addrArr) {
             super(addrArr);
             this.addrArr = addrArr;
+        }
+    }
+
+    public static class TestNestedStruct extends DynamicStruct {
+        public DynamicArray<DynamicArray<Address>> nestedAddr;
+        public TestNestedStruct(@Parameterized(type = Address.class) DynamicArray<DynamicArray<Address>> nestedAddr) {
+            super(nestedAddr);
+            this.nestedAddr = nestedAddr;
         }
     }
 
