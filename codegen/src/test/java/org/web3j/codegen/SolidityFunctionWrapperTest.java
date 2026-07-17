@@ -190,7 +190,7 @@ public class SolidityFunctionWrapperTest extends TempFileProvider {
         AbiDefinition functionDefinition =
                 new AbiDefinition(
                         false, Arrays.asList(array), "Transfer", new ArrayList<>(), "event", false);
-        TypeSpec.Builder builder = TypeSpec.classBuilder("testClass");
+        TypeSpec.Builder builder = TypeSpec.classBuilder("TestClass");
 
         builder.addMethods(
                 solidityFunctionWrapper.buildEventFunctions(
@@ -199,51 +199,8 @@ public class SolidityFunctionWrapperTest extends TempFileProvider {
                         solidityFunctionWrapper.getDuplicatedEventNames(
                                 Collections.singletonList(functionDefinition))));
 
-        String expected =
-                "class testClass {\n"
-                        + "  public static final org.web3j.abi.datatypes.Event TRANSFER_EVENT = new org.web3j.abi.datatypes.Event(\"Transfer\", \n"
-                        + "      java.util.Arrays.<org.web3j.abi.TypeReference<?>>asList(new org.web3j.abi.TypeReference<org.web3j.abi.datatypes.DynamicArray<org.web3j.abi.datatypes.generated.Uint256>>(true) {}));\n  ;\n\n"
-                        + "  public static java.util.List<TransferEventResponse> getTransferEvents(\n"
-                        + "      org.web3j.protocol.core.methods.response.TransactionReceipt transactionReceipt) {\n"
-                        + "    java.util.List<org.web3j.tx.Contract.EventValuesWithLog> valueList = staticExtractEventParametersWithLog(TRANSFER_EVENT, transactionReceipt);\n"
-                        + "    java.util.ArrayList<TransferEventResponse> responses = new java.util.ArrayList<TransferEventResponse>(valueList.size());\n"
-                        + "    for (org.web3j.tx.Contract.EventValuesWithLog eventValues : valueList) {\n"
-                        + "      TransferEventResponse typedResponse = new TransferEventResponse();\n"
-                        + "      typedResponse.log = eventValues.getLog();\n"
-                        + "      typedResponse.array = (byte[]) eventValues.getIndexedValues().get(0).getValue();\n"
-                        + "      responses.add(typedResponse);\n"
-                        + "    }\n"
-                        + "    return responses;\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public static TransferEventResponse getTransferEventFromLog(\n"
-                        + "      org.web3j.protocol.core.methods.response.Log log) {\n"
-                        + "    org.web3j.tx.Contract.EventValuesWithLog eventValues = staticExtractEventParametersWithLog(TRANSFER_EVENT, log);\n"
-                        + "    TransferEventResponse typedResponse = new TransferEventResponse();\n"
-                        + "    typedResponse.log = log;\n"
-                        + "    typedResponse.array = (byte[]) eventValues.getIndexedValues().get(0).getValue();\n"
-                        + "    return typedResponse;\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public io.reactivex.Flowable<TransferEventResponse> transferEventFlowable(\n"
-                        + "      org.web3j.protocol.core.methods.request.EthFilter filter) {\n"
-                        + "    return web3j.ethLogFlowable(filter).map(log -> getTransferEventFromLog(log));\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public io.reactivex.Flowable<TransferEventResponse> transferEventFlowable(\n"
-                        + "      org.web3j.protocol.core.DefaultBlockParameter startBlock,\n"
-                        + "      org.web3j.protocol.core.DefaultBlockParameter endBlock) {\n"
-                        + "    org.web3j.protocol.core.methods.request.EthFilter filter = new org.web3j.protocol.core.methods.request.EthFilter(startBlock, endBlock, getContractAddress());\n"
-                        + "    filter.addSingleTopic(org.web3j.abi.EventEncoder.encode(TRANSFER_EVENT));\n"
-                        + "    return transferEventFlowable(filter);\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public static class TransferEventResponse extends org.web3j.protocol.core.methods.response.BaseEventResponse {\n"
-                        + "    public byte[] array;\n"
-                        + "  }\n"
-                        + "}\n";
-
-        assertEquals((expected), builder.build().toString());
+        String expected = loadExpected("TestBuildEventWithIndexedArray.java");
+        assertEquals(expected, builder.build().toString());
     }
 
     @Test
@@ -1341,7 +1298,7 @@ public class SolidityFunctionWrapperTest extends TempFileProvider {
         AbiDefinition functionDefinition =
                 new AbiDefinition(
                         false, Arrays.asList(array), "Transfer", new ArrayList<>(), "event", false);
-        TypeSpec.Builder builder = TypeSpec.classBuilder("testClass");
+        TypeSpec.Builder builder = TypeSpec.classBuilder("TestClass");
 
         builder.addMethods(
                 solidityFunctionWrapper.buildEventFunctions(
@@ -1350,51 +1307,8 @@ public class SolidityFunctionWrapperTest extends TempFileProvider {
                         solidityFunctionWrapper.getDuplicatedEventNames(
                                 Collections.singletonList(functionDefinition))));
 
-        String expected =
-                "class testClass {\n"
-                        + "  public static final org.web3j.abi.datatypes.Event TRANSFER_EVENT = new org.web3j.abi.datatypes.Event(\"Transfer\", \n"
-                        + "      java.util.Arrays.<org.web3j.abi.TypeReference<?>>asList(new org.web3j.abi.TypeReference<org.web3j.abi.datatypes.generated.StaticArray2<org.web3j.abi.datatypes.generated.Bytes32>>(true) {}));\n  ;\n\n"
-                        + "  public static java.util.List<TransferEventResponse> getTransferEvents(\n"
-                        + "      org.web3j.protocol.core.methods.response.TransactionReceipt transactionReceipt) {\n"
-                        + "    java.util.List<org.web3j.tx.Contract.EventValuesWithLog> valueList = staticExtractEventParametersWithLog(TRANSFER_EVENT, transactionReceipt);\n"
-                        + "    java.util.ArrayList<TransferEventResponse> responses = new java.util.ArrayList<TransferEventResponse>(valueList.size());\n"
-                        + "    for (org.web3j.tx.Contract.EventValuesWithLog eventValues : valueList) {\n"
-                        + "      TransferEventResponse typedResponse = new TransferEventResponse();\n"
-                        + "      typedResponse.log = eventValues.getLog();\n"
-                        + "      typedResponse.array = (byte[]) eventValues.getIndexedValues().get(0).getValue();\n"
-                        + "      responses.add(typedResponse);\n"
-                        + "    }\n"
-                        + "    return responses;\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public static TransferEventResponse getTransferEventFromLog(\n"
-                        + "      org.web3j.protocol.core.methods.response.Log log) {\n"
-                        + "    org.web3j.tx.Contract.EventValuesWithLog eventValues = staticExtractEventParametersWithLog(TRANSFER_EVENT, log);\n"
-                        + "    TransferEventResponse typedResponse = new TransferEventResponse();\n"
-                        + "    typedResponse.log = log;\n"
-                        + "    typedResponse.array = (byte[]) eventValues.getIndexedValues().get(0).getValue();\n"
-                        + "    return typedResponse;\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public io.reactivex.Flowable<TransferEventResponse> transferEventFlowable(\n"
-                        + "      org.web3j.protocol.core.methods.request.EthFilter filter) {\n"
-                        + "    return web3j.ethLogFlowable(filter).map(log -> getTransferEventFromLog(log));\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public io.reactivex.Flowable<TransferEventResponse> transferEventFlowable(\n"
-                        + "      org.web3j.protocol.core.DefaultBlockParameter startBlock,\n"
-                        + "      org.web3j.protocol.core.DefaultBlockParameter endBlock) {\n"
-                        + "    org.web3j.protocol.core.methods.request.EthFilter filter = new org.web3j.protocol.core.methods.request.EthFilter(startBlock, endBlock, getContractAddress());\n"
-                        + "    filter.addSingleTopic(org.web3j.abi.EventEncoder.encode(TRANSFER_EVENT));\n"
-                        + "    return transferEventFlowable(filter);\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public static class TransferEventResponse extends org.web3j.protocol.core.methods.response.BaseEventResponse {\n"
-                        + "    public byte[] array;\n"
-                        + "  }\n"
-                        + "}\n";
-
-        assertEquals((expected), builder.build().toString());
+        String expected = loadExpected("TestBuildEventWithIndexedStaticArray.java");
+        assertEquals(expected, builder.build().toString());
     }
 
     @Test
@@ -1404,7 +1318,7 @@ public class SolidityFunctionWrapperTest extends TempFileProvider {
         AbiDefinition functionDefinition =
                 new AbiDefinition(
                         false, Arrays.asList(array), "Transfer", new ArrayList<>(), "event", false);
-        TypeSpec.Builder builder = TypeSpec.classBuilder("testClass");
+        TypeSpec.Builder builder = TypeSpec.classBuilder("TestClass");
 
         builder.addMethods(
                 solidityFunctionWrapper.buildEventFunctions(
@@ -1413,51 +1327,8 @@ public class SolidityFunctionWrapperTest extends TempFileProvider {
                         solidityFunctionWrapper.getDuplicatedEventNames(
                                 Collections.singletonList(functionDefinition))));
 
-        String expected =
-                "class testClass {\n"
-                        + "  public static final org.web3j.abi.datatypes.Event TRANSFER_EVENT = new org.web3j.abi.datatypes.Event(\"Transfer\", \n"
-                        + "      java.util.Arrays.<org.web3j.abi.TypeReference<?>>asList(new org.web3j.abi.TypeReference<org.web3j.abi.datatypes.DynamicArray<org.web3j.abi.datatypes.DynamicArray<org.web3j.abi.datatypes.generated.Uint256>>>(true) {}));\n  ;\n\n"
-                        + "  public static java.util.List<TransferEventResponse> getTransferEvents(\n"
-                        + "      org.web3j.protocol.core.methods.response.TransactionReceipt transactionReceipt) {\n"
-                        + "    java.util.List<org.web3j.tx.Contract.EventValuesWithLog> valueList = staticExtractEventParametersWithLog(TRANSFER_EVENT, transactionReceipt);\n"
-                        + "    java.util.ArrayList<TransferEventResponse> responses = new java.util.ArrayList<TransferEventResponse>(valueList.size());\n"
-                        + "    for (org.web3j.tx.Contract.EventValuesWithLog eventValues : valueList) {\n"
-                        + "      TransferEventResponse typedResponse = new TransferEventResponse();\n"
-                        + "      typedResponse.log = eventValues.getLog();\n"
-                        + "      typedResponse.array = (byte[]) eventValues.getIndexedValues().get(0).getValue();\n"
-                        + "      responses.add(typedResponse);\n"
-                        + "    }\n"
-                        + "    return responses;\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public static TransferEventResponse getTransferEventFromLog(\n"
-                        + "      org.web3j.protocol.core.methods.response.Log log) {\n"
-                        + "    org.web3j.tx.Contract.EventValuesWithLog eventValues = staticExtractEventParametersWithLog(TRANSFER_EVENT, log);\n"
-                        + "    TransferEventResponse typedResponse = new TransferEventResponse();\n"
-                        + "    typedResponse.log = log;\n"
-                        + "    typedResponse.array = (byte[]) eventValues.getIndexedValues().get(0).getValue();\n"
-                        + "    return typedResponse;\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public io.reactivex.Flowable<TransferEventResponse> transferEventFlowable(\n"
-                        + "      org.web3j.protocol.core.methods.request.EthFilter filter) {\n"
-                        + "    return web3j.ethLogFlowable(filter).map(log -> getTransferEventFromLog(log));\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public io.reactivex.Flowable<TransferEventResponse> transferEventFlowable(\n"
-                        + "      org.web3j.protocol.core.DefaultBlockParameter startBlock,\n"
-                        + "      org.web3j.protocol.core.DefaultBlockParameter endBlock) {\n"
-                        + "    org.web3j.protocol.core.methods.request.EthFilter filter = new org.web3j.protocol.core.methods.request.EthFilter(startBlock, endBlock, getContractAddress());\n"
-                        + "    filter.addSingleTopic(org.web3j.abi.EventEncoder.encode(TRANSFER_EVENT));\n"
-                        + "    return transferEventFlowable(filter);\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public static class TransferEventResponse extends org.web3j.protocol.core.methods.response.BaseEventResponse {\n"
-                        + "    public byte[] array;\n"
-                        + "  }\n"
-                        + "}\n";
-
-        assertEquals((expected), builder.build().toString());
+        String expected = loadExpected("TestBuildEventWithIndexedNestedArray.java");
+        assertEquals(expected, builder.build().toString());
     }
 
     @Test
@@ -1471,7 +1342,7 @@ public class SolidityFunctionWrapperTest extends TempFileProvider {
         AbiDefinition functionDefinition =
                 new AbiDefinition(
                         false, Arrays.asList(array), "Transfer", new ArrayList<>(), "event", false);
-        TypeSpec.Builder builder = TypeSpec.classBuilder("testClass");
+        TypeSpec.Builder builder = TypeSpec.classBuilder("TestClass");
 
         builder.addMethods(
                 nonNativeWrapper.buildEventFunctions(
@@ -1480,51 +1351,8 @@ public class SolidityFunctionWrapperTest extends TempFileProvider {
                         nonNativeWrapper.getDuplicatedEventNames(
                                 Collections.singletonList(functionDefinition))));
 
-        String expected =
-                "class testClass {\n"
-                        + "  public static final org.web3j.abi.datatypes.Event TRANSFER_EVENT = new org.web3j.abi.datatypes.Event(\"Transfer\", \n"
-                        + "      java.util.Arrays.<org.web3j.abi.TypeReference<?>>asList(new org.web3j.abi.TypeReference<org.web3j.abi.datatypes.DynamicArray<org.web3j.abi.datatypes.generated.Uint256>>(true) {}));\n  ;\n\n"
-                        + "  public static java.util.List<TransferEventResponse> getTransferEvents(\n"
-                        + "      org.web3j.protocol.core.methods.response.TransactionReceipt transactionReceipt) {\n"
-                        + "    java.util.List<org.web3j.tx.Contract.EventValuesWithLog> valueList = staticExtractEventParametersWithLog(TRANSFER_EVENT, transactionReceipt);\n"
-                        + "    java.util.ArrayList<TransferEventResponse> responses = new java.util.ArrayList<TransferEventResponse>(valueList.size());\n"
-                        + "    for (org.web3j.tx.Contract.EventValuesWithLog eventValues : valueList) {\n"
-                        + "      TransferEventResponse typedResponse = new TransferEventResponse();\n"
-                        + "      typedResponse.log = eventValues.getLog();\n"
-                        + "      typedResponse.array = (org.web3j.abi.datatypes.generated.Bytes32) eventValues.getIndexedValues().get(0);\n"
-                        + "      responses.add(typedResponse);\n"
-                        + "    }\n"
-                        + "    return responses;\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public static TransferEventResponse getTransferEventFromLog(\n"
-                        + "      org.web3j.protocol.core.methods.response.Log log) {\n"
-                        + "    org.web3j.tx.Contract.EventValuesWithLog eventValues = staticExtractEventParametersWithLog(TRANSFER_EVENT, log);\n"
-                        + "    TransferEventResponse typedResponse = new TransferEventResponse();\n"
-                        + "    typedResponse.log = log;\n"
-                        + "    typedResponse.array = (org.web3j.abi.datatypes.generated.Bytes32) eventValues.getIndexedValues().get(0);\n"
-                        + "    return typedResponse;\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public io.reactivex.Flowable<TransferEventResponse> transferEventFlowable(\n"
-                        + "      org.web3j.protocol.core.methods.request.EthFilter filter) {\n"
-                        + "    return web3j.ethLogFlowable(filter).map(log -> getTransferEventFromLog(log));\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public io.reactivex.Flowable<TransferEventResponse> transferEventFlowable(\n"
-                        + "      org.web3j.protocol.core.DefaultBlockParameter startBlock,\n"
-                        + "      org.web3j.protocol.core.DefaultBlockParameter endBlock) {\n"
-                        + "    org.web3j.protocol.core.methods.request.EthFilter filter = new org.web3j.protocol.core.methods.request.EthFilter(startBlock, endBlock, getContractAddress());\n"
-                        + "    filter.addSingleTopic(org.web3j.abi.EventEncoder.encode(TRANSFER_EVENT));\n"
-                        + "    return transferEventFlowable(filter);\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public static class TransferEventResponse extends org.web3j.protocol.core.methods.response.BaseEventResponse {\n"
-                        + "    public org.web3j.abi.datatypes.generated.Bytes32 array;\n"
-                        + "  }\n"
-                        + "}\n";
-
-        assertEquals((expected), builder.build().toString());
+        String expected = loadExpected("TestBuildEventWithIndexedArrayWithoutNativeTypes.java");
+        assertEquals(expected, builder.build().toString());
     }
 
     @Test
@@ -1540,7 +1368,7 @@ public class SolidityFunctionWrapperTest extends TempFileProvider {
         AbiDefinition functionDefinition =
                 new AbiDefinition(
                         false, Arrays.asList(struct), "Transfer", new ArrayList<>(), "event", false);
-        TypeSpec.Builder builder = TypeSpec.classBuilder("testClass");
+        TypeSpec.Builder builder = TypeSpec.classBuilder("TestClass");
 
         builder.addMethods(
                 solidityFunctionWrapper.buildEventFunctions(
@@ -1549,50 +1377,15 @@ public class SolidityFunctionWrapperTest extends TempFileProvider {
                         solidityFunctionWrapper.getDuplicatedEventNames(
                                 Collections.singletonList(functionDefinition))));
 
-        String expected =
-                "class testClass {\n"
-                        + "  public static final org.web3j.abi.datatypes.Event TRANSFER_EVENT = new org.web3j.abi.datatypes.Event(\"Transfer\", \n"
-                        + "      java.util.Arrays.<org.web3j.abi.TypeReference<?>>asList(new org.web3j.abi.TypeReference<SomeStruct>(true) {}));\n  ;\n\n"
-                        + "  public static java.util.List<TransferEventResponse> getTransferEvents(\n"
-                        + "      org.web3j.protocol.core.methods.response.TransactionReceipt transactionReceipt) {\n"
-                        + "    java.util.List<org.web3j.tx.Contract.EventValuesWithLog> valueList = staticExtractEventParametersWithLog(TRANSFER_EVENT, transactionReceipt);\n"
-                        + "    java.util.ArrayList<TransferEventResponse> responses = new java.util.ArrayList<TransferEventResponse>(valueList.size());\n"
-                        + "    for (org.web3j.tx.Contract.EventValuesWithLog eventValues : valueList) {\n"
-                        + "      TransferEventResponse typedResponse = new TransferEventResponse();\n"
-                        + "      typedResponse.log = eventValues.getLog();\n"
-                        + "      typedResponse.myStruct = (byte[]) eventValues.getIndexedValues().get(0).getValue();\n"
-                        + "      responses.add(typedResponse);\n"
-                        + "    }\n"
-                        + "    return responses;\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public static TransferEventResponse getTransferEventFromLog(\n"
-                        + "      org.web3j.protocol.core.methods.response.Log log) {\n"
-                        + "    org.web3j.tx.Contract.EventValuesWithLog eventValues = staticExtractEventParametersWithLog(TRANSFER_EVENT, log);\n"
-                        + "    TransferEventResponse typedResponse = new TransferEventResponse();\n"
-                        + "    typedResponse.log = log;\n"
-                        + "    typedResponse.myStruct = (byte[]) eventValues.getIndexedValues().get(0).getValue();\n"
-                        + "    return typedResponse;\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public io.reactivex.Flowable<TransferEventResponse> transferEventFlowable(\n"
-                        + "      org.web3j.protocol.core.methods.request.EthFilter filter) {\n"
-                        + "    return web3j.ethLogFlowable(filter).map(log -> getTransferEventFromLog(log));\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public io.reactivex.Flowable<TransferEventResponse> transferEventFlowable(\n"
-                        + "      org.web3j.protocol.core.DefaultBlockParameter startBlock,\n"
-                        + "      org.web3j.protocol.core.DefaultBlockParameter endBlock) {\n"
-                        + "    org.web3j.protocol.core.methods.request.EthFilter filter = new org.web3j.protocol.core.methods.request.EthFilter(startBlock, endBlock, getContractAddress());\n"
-                        + "    filter.addSingleTopic(org.web3j.abi.EventEncoder.encode(TRANSFER_EVENT));\n"
-                        + "    return transferEventFlowable(filter);\n"
-                        + "  }\n"
-                        + "\n"
-                        + "  public static class TransferEventResponse extends org.web3j.protocol.core.methods.response.BaseEventResponse {\n"
-                        + "    public byte[] myStruct;\n"
-                        + "  }\n"
-                        + "}\n";
+        String expected = loadExpected("TestBuildEventWithIndexedStruct.java");
+        assertEquals(expected, builder.build().toString());
+    }
 
-        assertEquals((expected), builder.build().toString());
+    private String loadExpected(String filename) throws Exception {
+        java.net.URL url = getClass().getResource("/expected/" + filename);
+        if (url == null) {
+            throw new java.io.FileNotFoundException("Resource not found: /expected/" + filename);
+        }
+        return new String(java.nio.file.Files.readAllBytes(java.nio.file.Paths.get(url.toURI()))).replace("\r\n", "\n");
     }
 }
