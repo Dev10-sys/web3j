@@ -12,6 +12,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 - Fix pass accessList to parent in Transaction7702 constructor [#2292](https://github.com/LFDT-web3j/web3j/pull/2292)
 - Fix Transaction serialization failure when fee fields are null [#2293](https://github.com/LFDT-web3j/web3j/pull/2293)
 - Fix stale EIP-7691 blob base-fee update fraction [#2300](https://github.com/LFDT-web3j/web3j/pull/2300)
+- Fix integration-tests: dynamically remove unstable legacy Sonatype repositories [#2304](https://github.com/LFDT-web3j/web3j/pull/2304)
 
 ### Features
 
