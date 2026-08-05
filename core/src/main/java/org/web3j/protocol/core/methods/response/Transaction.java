@@ -16,13 +16,39 @@ import java.math.BigInteger;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import org.web3j.crypto.TransactionUtils;
 import org.web3j.utils.Numeric;
 
 /** Transaction object used by both {@link EthTransaction} and {@link EthBlock}. */
-@JsonPropertyOrder({"hash", "nonce", "blockHash", "blockNumber", "chainId", "transactionIndex", "from", "to", "value", "gas", "gasPrice",
-        "input", "creates", "publicKey", "raw", "r", "s", "v", "yParity", "accessList", "type", "maxFeePerGas",
-        "maxPriorityFeePerGas", "maxFeePerBlobGas", "blobVersionedHashes", "authorizationList"})
+@JsonPropertyOrder({
+    "hash",
+    "nonce",
+    "blockHash",
+    "blockNumber",
+    "chainId",
+    "transactionIndex",
+    "from",
+    "to",
+    "value",
+    "gas",
+    "gasPrice",
+    "input",
+    "creates",
+    "publicKey",
+    "raw",
+    "r",
+    "s",
+    "v",
+    "yParity",
+    "accessList",
+    "type",
+    "maxFeePerGas",
+    "maxPriorityFeePerGas",
+    "maxFeePerBlobGas",
+    "blobVersionedHashes",
+    "authorizationList"
+})
 public class Transaction {
     private String hash;
     private String nonce;
@@ -282,6 +308,7 @@ public class Transaction {
     }
 
     public BigInteger getNonce() {
+        if (nonce == null) return null;
         return Numeric.decodeQuantity(nonce);
     }
 
@@ -302,6 +329,7 @@ public class Transaction {
     }
 
     public BigInteger getBlockNumber() {
+        if (blockNumber == null) return null;
         return Numeric.decodeQuantity(blockNumber);
     }
 
@@ -314,6 +342,7 @@ public class Transaction {
     }
 
     public BigInteger getTransactionIndex() {
+        if (transactionIndex == null) return null;
         return Numeric.decodeQuantity(transactionIndex);
     }
 
@@ -342,6 +371,7 @@ public class Transaction {
     }
 
     public BigInteger getValue() {
+        if (value == null) return null;
         return Numeric.decodeQuantity(value);
     }
 
@@ -354,6 +384,7 @@ public class Transaction {
     }
 
     public BigInteger getGasPrice() {
+        if (gasPrice == null) return null;
         return Numeric.decodeQuantity(gasPrice);
     }
 
@@ -366,6 +397,7 @@ public class Transaction {
     }
 
     public BigInteger getGas() {
+        if (gas == null) return null;
         return Numeric.decodeQuantity(gas);
     }
 
@@ -494,6 +526,7 @@ public class Transaction {
     }
 
     public BigInteger getMaxPriorityFeePerGas() {
+        if (maxPriorityFeePerGas == null) return null;
         return Numeric.decodeQuantity(maxPriorityFeePerGas);
     }
 
@@ -514,6 +547,7 @@ public class Transaction {
     }
 
     public BigInteger getMaxFeePerBlobGas() {
+        if (maxFeePerBlobGas == null) return null;
         return Numeric.decodeQuantity(maxFeePerBlobGas);
     }
 
